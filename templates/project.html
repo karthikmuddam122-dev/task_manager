@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Projects</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: #f4f6f8;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 180px;
+            background: #111827;
+            color: white;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 25px;
+            font-size: 18px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+        }
+
+        .sidebar a:hover {
+            background: #374151;
+        }
+
+        /* MAIN */
+        .main {
+            margin-left: 240px;
+            padding: 30px;
+        }
+
+        .header {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* PROJECT CARD */
+        .project {
+            background: white;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        /* FORM */
+        .form {
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>Task Manager</h2>
+    <a href="/dashboard_page">Dashboard</a>
+    <a href="/projects">Projects</a>
+    <a href="/">Logout</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <div class="header">
+        <h2>Projects</h2>
+    </div>
+
+    <!-- PROJECT LIST -->
+    <h3>All Projects</h3>
+    <div id="projectList"></div>
+
+    <!-- CREATE PROJECT -->
+    <div class="form">
+        <h3>Create Project</h3>
+
+        <input id="projectName" placeholder="Project Name">
+
+        <button onclick="createProject()">Create Project</button>
+    </div>
+
+</div>
+
+<script>
+
+// LOAD PROJECTS
+window.onload = function () {
+    loadProjects();
+};
+
+function loadProjects() {
+    fetch("/get_projects")
+    .then(res => res.json())
+    .then(data => {
+
+        let list = document.getElementById("projectList");
+        list.innerHTML = "";
+
+        data.forEach(p => {
+            let div = document.createElement("div");
+            div.className = "project";
+
+            div.innerHTML = `
+                <h3>${p.name}</h3>
+                <p><b>Project ID:</b> ${p.id}</p>
+                <p><b>Created By:</b> ${p.created_by}</p>
+            `;
+
+            list.appendChild(div);
+        });
+    });
+}
+
+// CREATE PROJECT
+function createProject() {
+    fetch("/create_project", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name: document.getElementById("projectName").value,
+            user_id: 1
+        })
+    })
+    .then(res => res.json())
+    .then(() => {
+        document.getElementById("projectName").value = "";
+        loadProjects();
+    });
+}
+
+</script>
+
+</body>
+</html>

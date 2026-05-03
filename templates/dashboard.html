@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <style>
+    body {
+        margin: 0;
+        font-family: Arial;
+        background: #f4f6f8;
+    }
+
+    /* FULL LAYOUT */
+    .layout {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+        width: 180px;
+        background: #111827;
+        color: white;
+        padding: 20px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 100;
+    }
+
+    .sidebar h2 {
+        margin-bottom: 25px;
+        font-size: 18px;
+    }
+
+    .sidebar a {
+        display: block;
+        color: white;
+        text-decoration: none;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .sidebar a:hover {
+        background: #374151;
+    }
+
+    /* MAIN */
+    .main {
+        margin-left: 240px;
+        width: calc(100% - 240px);
+        padding: 30px;
+        box-sizing: border-box;
+    }
+
+    .header {
+        background: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    #taskList, #projectList {
+        margin-top: 20px;
+    }
+
+    .task, .project {
+        background: white;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        color: white;
+        font-size: 12px;
+    }
+
+    .todo { background: orange; }
+    .done { background: green; }
+
+    button {
+        padding: 8px 12px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #1d4ed8;
+    }
+
+    .form {
+        margin-top: 25px;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>Task Manager</h2>
+        <a href="#">Dashboard</a>
+        <a href="#">Tasks</a>
+        <a href="#">Projects</a>
+        <a href="/">Logout</a>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <div class="header">
+            <h2>Dashboard</h2>
+        </div>
+
+        <!-- STATS -->
+        <div class="cards">
+            <div class="card">
+                <h2 id="total">0</h2>
+                <p>Total Tasks</p>
+            </div>
+
+            <div class="card">
+                <h2 id="completed">0</h2>
+                <p>Completed</p>
+            </div>
+
+            <div class="card">
+                <h2 id="pending">0</h2>
+                <p>Pending</p>
+            </div>
+        </div>
+
+        <!-- TASKS -->
+        <h3>Tasks</h3>
+        <div id="taskList"></div>
+
+        <!-- PROJECTS (NEW FEATURE ADDED) -->
+        <h3>Projects</h3>
+        <div id="projectList"></div>
+
+        <!-- CREATE TASK -->
+        <div class="form">
+            <h3>Create Task</h3>
+            <input id="title" placeholder="Title">
+            <input id="description" placeholder="Description">
+            <input id = "YYYY-MM-DD" placeholder="YYYY-MM-DD">
+            <input id = "user_id" placeholder="User_ID">
+            <input id = "project_id" placeholder="Project ID">
+            <button onclick="createTask()">Create Task</button>
+        </div>
+
+        <!-- CREATE PROJECT (NEW FEATURE) -->
+        <div class="form">
+            <h3>Create Project</h3>
+            <input id="projectName" placeholder="Project Name">
+            <button onclick="createProject()">Create Project</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+window.onload = function () {
+    loadDashboard();
+    loadTasks();
+    loadProjects();   // NEW
+};
+
+// ---------------- DASHBOARD ----------------
+function loadDashboard() {
+    fetch("/dashboard")
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("total").innerText = data.total;
+        document.getElementById("completed").innerText = data.completed;
+        document.getElementById("pending").innerText = data.pending;
+    });
+}
+
+// ---------------- TASKS ----------------
+function loadTasks() {
+    fetch("/get_tasks")
+    .then(res => res.json())
+    .then(tasks => {
+
+        let list = document.getElementById("taskList");
+        list.innerHTML = "";
+
+        tasks.forEach(t => {
+            let div = document.createElement("div");
+            div.className = "task";
+
+            div.innerHTML = `
+                <h3>${t.title}</h3>
+                <p>${t.description}</p>
+                <span class="badge ${t.status == 'Done' ? 'done' : 'todo'}">
+                    ${t.status}
+                </span>
+                <br><br>
+                <button onclick="markDone(${t.id})">Mark Done</button>
+            `;
+
+            list.appendChild(div);
+        });
+    });
+}
+
+// ---------------- PROJECTS (NEW) ----------------
+function loadProjects() {
+    fetch("/get_projects")
+    .then(res => res.json())
+    .then(projects => {
+
+        let list = document.getElementById("projectList");
+        list.innerHTML = "";
+
+        projects.forEach(p => {
+            let div = document.createElement("div");
+            div.className = "project";
+
+            div.innerHTML = `
+                <h3>${p.name}</h3>
+                <p>Project ID: ${p.id}</p>
+            `;
+
+            list.appendChild(div);
+        });
+    });
+}
+
+// ---------------- CREATE PROJECT (NEW) ----------------
+function createProject() {
+    fetch("/create_project", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name: document.getElementById("projectName").value,
+            user_id: 1
+        })
+    })
+    .then(res => res.json())
+    .then(() => {
+        loadProjects();
+    });
+}
+
+// ---------------- CREATE TASK ----------------
+function createTask() {
+    fetch("/create_task", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            title: document.getElementById("title").value,
+            description: document.getElementById("description").value
+        })
+    })
+    .then(() => {
+        loadTasks();
+        loadDashboard();
+    });
+}
+
+// ---------------- UPDATE TASK ----------------
+function markDone(id) {
+    fetch("/update_task", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            task_id: id,
+            status: "Done"
+        })
+    })
+    .then(() => {
+        loadTasks();
+        loadDashboard();
+    });
+}
+</script>
+
+</body>
+</html>
